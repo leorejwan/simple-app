@@ -4,6 +4,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import * as path from 'path'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment';
+import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
@@ -32,6 +33,18 @@ export class SimpleAppStack extends cdk.Stack {
         PHOTO_BUCKET_NAME: bucket.bucketName,
       }
     })
+
+    const bucketContainerPermissions = new PolicyStatement();
+    bucketContainerPermissions.addResources(bucket.bucketArn);
+    bucketContainerPermissions.addActions('s3:ListBucket');
+
+    const bucketPermissions = new PolicyStatement();
+    bucketPermissions.addResources(`${bucket.bucketArn}/*`);
+    bucketPermissions.addActions('s3:GetObject', 's3:PutObject');
+
+    getPhotos.addToRolePolicy(bucketContainerPermissions);
+    getPhotos.addToRolePolicy(bucketPermissions);
+
 
     new cdk.CfnOutput(this, 'MySimpleAppBucketNameExport', {
         value: bucket.bucketName,
