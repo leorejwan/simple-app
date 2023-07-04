@@ -2,8 +2,17 @@ const { S3 } = require("aws-sdk");
 
 const bucketName = process.env.PHOTO_BUCKET_NAME;
 
-function generateUrl(asset){
+async function generateUrl(asset){
+    const url = await S3.getSignedUrlPromise('getObject', {
+        Bucket: bucketName,
+        Key: asset.Key,
+        Expires: 24 * 60 * 60
+    })
 
+    return {
+        filename: asset.Key,
+        url
+    }
 }
 
 
