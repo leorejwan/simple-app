@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as apigateway from 'aws-cdk-lib/aws-apigateway'
 import { Construct } from 'constructs';
 import * as path from 'path'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment';
@@ -45,10 +46,37 @@ export class SimpleAppStack extends cdk.Stack {
     getPhotos.addToRolePolicy(bucketContainerPermissions);
     getPhotos.addToRolePolicy(bucketPermissions);
 
+    // const httpApi = new apigateway.RestApi(this, 'books-api', {
+    //   defaultCorsPreflightOptions:{
+    //     allowOrigins: ['*'],
+    //     allowMethods: [lambda.HttpMethod.GET]
+    //   },
+    //   restApiName: 'photo-api'
+    // });
+
+    // const lambdaIntegration = new apigateway.LambdaIntegration(getPhotos);
+
+    // const photos = httpApi.root.addResource('getAllPhotos');
+    // photos.addMethod('GET');
+
+    const lambdaApi = new apigateway.LambdaRestApi(this, 'myapi', {
+      handler: getPhotos,
+      proxy: false
+    });
+
+    const items = lambdaApi.root.addResource('getAllPhotos');
+    items.addMethod('GET');  // GET /getAllPhotos
+
+
 
     new cdk.CfnOutput(this, 'MySimpleAppBucketNameExport', {
         value: bucket.bucketName,
         exportName: 'MySimpleAppBucketName',
+    });
+
+    new cdk.CfnOutput(this, 'MySimpleAppApi', {
+      value: lambdaApi.url,
+      exportName: 'MySimpleAppApiEndpoint'
     });
 
     // example resource
