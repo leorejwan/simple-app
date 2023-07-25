@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import { Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
+import { BlockPublicAccess, Bucket, BucketAccessControl, BucketEncryption } from 'aws-cdk-lib/aws-s3';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway'
 import { Construct } from 'constructs';
@@ -23,6 +23,18 @@ export class SimpleAppStack extends cdk.Stack {
         Source.asset(path.join(__dirname, '..', 'photos'))
       ],
       destinationBucket: bucket
+    })
+
+    const websiteBucket = new Bucket(this, 'MySimpleAppWebsiteBucket', {
+      websiteIndexDocument: 'index.html',
+      publicReadAccess: true,
+      blockPublicAccess: BlockPublicAccess.BLOCK_ACLS,
+      accessControl: BucketAccessControl.BUCKET_OWNER_FULL_CONTROL
+    });
+
+    new BucketDeployment(this, 'MySimpleAppWebsiteDeploy', {
+      sources: [Source.asset(path.join(__dirname, '..', 'frontend', 'build'))],
+      destinationBucket: websiteBucket
     })
 
     const getPhotos = new lambda.Function(this, 'MySimpleAppLambda', {
@@ -73,6 +85,12 @@ export class SimpleAppStack extends cdk.Stack {
         value: bucket.bucketName,
         exportName: 'MySimpleAppBucketName',
     });
+
+    new cdk.CfnOutput(this, 'MySimpleAppWebsiteBucketNameExport', {
+      value: websiteBucket.bucketName,
+      exportName: 'MySimpleAppWebsiteBucketName',
+  });
+
 
     new cdk.CfnOutput(this, 'MySimpleAppApi', {
       value: lambdaApi.url,
