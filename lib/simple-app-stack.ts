@@ -6,6 +6,7 @@ import { Construct } from 'constructs';
 import * as path from 'path'
 import {BucketDeployment, Source} from 'aws-cdk-lib/aws-s3-deployment';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { CloudFrontWebDistribution } from 'aws-cdk-lib/aws-cloudfront'
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
@@ -35,6 +36,17 @@ export class SimpleAppStack extends cdk.Stack {
     new BucketDeployment(this, 'MySimpleAppWebsiteDeploy', {
       sources: [Source.asset(path.join(__dirname, '..', 'frontend', 'build'))],
       destinationBucket: websiteBucket
+    })
+
+    const cloudFront = new CloudFrontWebDistribution(this, 'MySimpleAppDistribution', {
+      originConfigs:[
+        {
+          s3OriginSource:{
+            s3BucketSource: websiteBucket
+          },
+          behaviors: [{ isDefaultBehavior: true }]
+        }
+      ]
     })
 
     const getPhotos = new lambda.Function(this, 'MySimpleAppLambda', {
@@ -89,6 +101,11 @@ export class SimpleAppStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'MySimpleAppWebsiteBucketNameExport', {
       value: websiteBucket.bucketName,
       exportName: 'MySimpleAppWebsiteBucketName',
+    });
+
+    new cdk.CfnOutput(this, 'MySimpleAppWebsiteUrl', {
+      value: cloudFront.distributionDomainName,
+      exportName: 'MySimpleAppUrl',
   });
 
 
