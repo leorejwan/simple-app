@@ -20,19 +20,21 @@ async function generateUrl(asset){
 exports.handler = async function (event, context)
 {
     console.log("BuccketName: " + bucketName);
-    var a = "HELLO"
     try{
         const { Contents: results } = await s3.listObjects({Bucket: bucketName}).promise();
         const photos = await Promise.all(results.map(result => generateUrl(result)));
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(photos),
-        };
+        var response = {
+            "statusCode": 200,
+            "body": JSON.stringify(photos)
+        }
+
+        return response;
     } catch (error) {
-        return {
-            statusCode: 500,
-            body: error.message
-        };
+        var response = {
+            "statusCode": 500,
+            "body": error.message
+        }
+        return response;
     }
 }
